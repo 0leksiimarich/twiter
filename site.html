@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Твітер 2012</title>
+  <style>
+    body {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      background-color: #f5f8fa;
+      color: #14171a;
+      margin: 0;
+    }
+
+    header {
+      background-color: #4099ff;
+      padding: 10px 0;
+      text-align: center;
+      color: white;
+      font-size: 20px;
+      border-bottom: 1px solid #1877d5;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-left: 1px solid #ccd6dd;
+      border-right: 1px solid #ccd6dd;
+    }
+
+    textarea {
+      width: 100%;
+      height: 70px;
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #ccd6dd;
+      border-radius: 4px;
+      resize: none;
+    }
+
+    input[type="file"] {
+      margin-top: 10px;
+    }
+
+    button {
+      margin-top: 10px;
+      background-color: #4099ff;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      font-size: 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      float: right;
+    }
+
+    .tweet {
+      border-bottom: 1px solid #e1e8ed;
+      padding: 12px 0;
+      display: flex;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 5px;
+      background-color: #aab8c2;
+      flex-shrink: 0;
+    }
+
+    .tweet-content {
+      flex-grow: 1;
+    }
+
+    .username {
+      font-weight: bold;
+      color: #4099ff;
+    }
+
+    .tweet-text {
+      margin: 5px 0;
+    }
+
+    .tweet img {
+      max-width: 100%;
+      border-radius: 4px;
+      margin-top: 5px;
+    }
+
+    .like {
+      cursor: pointer;
+      color: #657786;
+      font-size: 13px;
+    }
+
+    .like.liked {
+      color: #e0245e;
+    }
+
+    .clear {
+      clear: both;
+    }
+
+    #usernamePrompt {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #usernamePrompt div {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    #usernamePrompt input {
+      padding: 10px;
+      width: 200px;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>Twitter — 2012 стиль 🐦</header>
+
+  <div id="usernamePrompt">
+    <div>
+      <h2>Введіть ім’я користувача</h2>
+      <input type="text" id="usernameInput" placeholder="Ваше ім’я">
+      <br><br>
+      <button onclick="saveUsername()">Продовжити</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <textarea id="tweetInput" placeholder="Що нового?"></textarea>
+    <input type="file" id="imageInput" accept="image/*">
+    <button onclick="postTweet()">Твітнути</button>
+    <div class="clear"></div>
+    <div id="tweetFeed"></div>
+  </div>
+
+  <script>
+    let tweets = JSON.parse(localStorage.getItem('tweets')) || [];
+    let username = localStorage.getItem('username');
+
+    function saveUsername() {
+      const input = document.getElementById('usernameInput').value.trim();
+      if (input !== "") {
+        username = input;
+        localStorage.setItem('username', username);
+        document.getElementById('usernamePrompt').style.display = "none";
+        renderTweets();
+      }
+    }
+
+    if (username) {
+      document.getElementById('usernamePrompt').style.display = "none";
+    }
+
+    function saveTweets() {
+      localStorage.setItem('tweets', JSON.stringify(tweets));
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      const options = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
+      return date.toLocaleDateString('uk-UA', options);
+    }
+
+    function renderTweets() {
+      const feed = document.getElementById('tweetFeed');
+      feed.innerHTML = '';
+      tweets.slice().reverse().forEach((tweet, i) => {
+        const tweetEl = document.createElement('div');
+        tweetEl.className = 'tweet';
+
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+
+        const content = document.createElement('div');
+        content.className = 'tweet-content';
+
+        const name = document.createElement('div');
+        name.className = 'username';
+        name.innerText = tweet.username;
+
+        const timestamp = document.createElement('div');
+        timestamp.style.fontSize = '12px';
+        timestamp.style.color = '#657786';
+        timestamp.innerText = formatDate(tweet.time);
+
+        const text = document.createElement('div');
+        text.className = 'tweet-text';
+        text.innerText = tweet.text;
+
+        content.appendChild(name);
+        content.appendChild(timestamp);
+        content.appendChild(text);
+
+        if (tweet.image) {
+          const img = document.createElement('img');
+          img.src = tweet.image;
+          content.appendChild(img);
+        }
+
+        const like = document.createElement('div');
+        like.className = 'like';
+        like.innerText = tweet.liked ? '❤️ Подобається' : '🤍 Подобається';
+        if (tweet.liked) like.classList.add('liked');
+        like.onclick = () => {
+          tweets[tweets.length - 1 - i].liked = !tweet.liked;
+          saveTweets();
+          renderTweets();
+        };
+
+        content.appendChild(like);
+
+        if (tweet.username === username) {
+          const delBtn = document.createElement('button');
+          delBtn.innerText = 'Видалити';
+          delBtn.style.background = '#e0245e';
+          delBtn.style.color = 'white';
+          delBtn.style.border = 'none';
+          delBtn.style.padding = '5px 10px';
+          delBtn.style.marginTop = '5px';
+          delBtn.style.borderRadius = '4px';
+          delBtn.onclick = () => {
+            tweets.splice(tweets.length - 1 - i, 1);
+            saveTweets();
+            renderTweets();
+          };
+          content.appendChild(delBtn);
+        }
+
+        tweetEl.appendChild(avatar);
+        tweetEl.appendChild(content);
+        feed.appendChild(tweetEl);
+      });
+    }
+
+    function postTweet() {
+      const text = document.getElementById('tweetInput').value.trim();
+      const fileInput = document.getElementById('imageInput');
+      const file = fileInput.files[0];
+
+      if (text === "" && !file) return;
+
+      const reader = new FileReader();
+      reader.onload = function() {
+        const newTweet = {
+          username: username,
+          text: text,
+          image: file ? reader.result : null,
+          liked: false,
+          time: new Date().toISOString()
+        };
+        tweets.push(newTweet);
+        saveTweets();
+        renderTweets();
+        document.getElementById('tweetInput').value = '';
+        document.getElementById('imageInput').value = '';
+      };
+
+      if (file) {
+        reader.readAsDataURL(file);
+      } else {
+        reader.onload();
+      }
+    }
+
+    renderTweets();
+  </script>
+
+</body>
+</html>
+
